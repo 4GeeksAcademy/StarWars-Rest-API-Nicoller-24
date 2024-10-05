@@ -78,12 +78,64 @@ def get_planeta(planet_id):
     
     return jsonify(planeta.serialize()), 200
 
-@app.route('/users/favorites', methods=['GET'])
-def get_favorites():
-    all_planets = list(Planetas.query.all()) 
-    results = list(map(lambda planet: planet.serialize(), all_planets)) 
 
-    return jsonify(results), 200
+@app.route('/planets/<int:planet_id>', methods=['POST'])
+def add_planeta(planet_id):
+    body = request.get_json()
+    favorito = PlanetasFavoritos(user_id = body['user_id'], planeta_favorito = body['planeta_favorito'])
+    db.session.add(favorito)
+    db.session.commit()
+
+    response_body = {
+        "msg": "se agrego a Favoritos "
+    }
+    
+    return jsonify(response_body), 200
+
+@app.route('/planets/<int:people_id>', methods=['POST'])
+def add_personaje(people_id):
+    body = request.get_json()
+    favorito = PersonajesFavoritos(user_id = body['user_id'], personaje_favorito = body['personaje_favorito'])
+    db.session.add(favorito)
+    db.session.commit()
+
+    response_body = {
+        "msg": "se agrego a Favoritos "
+    }
+    
+    return jsonify(response_body), 200
+
+@app.route('/user/favorites/<int:user_id>', methods=['GET'])
+def get_favorites(user_id):
+    
+    planetas_favoritos = PlanetasFavoritos.query.filter_by(id=user_id)
+    planetas = list(map(lambda item: item.serialize(), planetas_favoritos)) 
+
+    personajes_favoritos = PersonajesFavoritos.query.filter_by(id=user_id)
+    personajes = list(map(lambda item: item.serialize(), personajes_favoritos))
+
+    result = {
+        "planetas_fav": planetas,
+        "personajes_fav": personajes
+    }
+
+
+    return jsonify(result), 200
+
+@app.route('/planets/<int:planet_id>/<int:user_id>', methods=['DELETE'])
+def delete_planeta(planet_id, user_id):
+
+    planetas_favoritos = PlanetasFavoritos.query.filter_by(id=user_id)
+    planetas = list(map(lambda item: item.serialize(), planetas_favoritos)) 
+
+    print(planetas)
+    
+
+    response_body = {
+        "msg": "se agrego a Favoritos "
+    }
+    
+    return jsonify(response_body), 200
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':

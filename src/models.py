@@ -4,46 +4,29 @@ from sqlalchemy.orm import relationship
 
 db = SQLAlchemy()
 
-# Tabla intermedia PersonajesFavoritos
-class PersonajesFavoritos(db.Model):
-    __tablename__ = 'personajes_favoritos'
+class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, ForeignKey('user.id'))
-    personaje_id = db.Column(db.Integer, ForeignKey('personajes.id'))
+    name = db.Column(db.String(120), unique=False, nullable=False)
+    last_name = db.Column(db.String(120), unique=False, nullable=False)
+    user_name = db.Column(db.String(120), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password = db.Column(db.String(80), unique=False, nullable=False)
+    is_active = db.Column(db.Boolean(), unique=False, nullable=False)
     
-    user = relationship("User", back_populates="personajes_favoritos")
-    personaje = relationship("Personajes", back_populates="favorited_by")
+    
+    planeta_fav = db.relationship('PlanetasFavoritos', backref='user', lazy=True)
+    personaje_fav = db.relationship('PersonajesFavoritos', backref='user', lazy=True)
 
     def __repr__(self):
-        return '<PersonajesFav %r>' % self.user_id
+        return '<User %r>' % self.name
 
     def serialize(self):
         return {
-            "user_id": self.user_id,
-            "personaje_id": self.personaje_id,
-            "user_name": self.user.user_name,
-            "personaje_name": self.personaje.name
-        }
-
-# Tabla intermedia PlanetasFavoritos
-class PlanetasFavoritos(db.Model):
-    __tablename__ = 'planetas_favoritos'
-    id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, ForeignKey('user.id'))
-    planeta_id = db.Column(db.Integer, ForeignKey('planetas.id'))
-    
-    user = relationship("User", back_populates="planetas_favoritos")
-    planeta = relationship("Planetas", back_populates="favorited_by")
-
-    def __repr__(self):
-        return '<PlanetasFav %r>' % self.user_id
-
-    def serialize(self):
-        return {
-            "user_id": self.user_id,
-            "planeta_id": self.planeta_id,
-            "user_name": self.user.user_name,
-            "planeta_name": self.planeta.name
+            "id": self.id,
+            "name": self.name,
+            "last_name": self.last_name,
+            "user_name": self.user_name,
+            "email": self.email,
         }
 
 # Clase Personajes
@@ -57,7 +40,8 @@ class Personajes(db.Model):
     birth_year = db.Column(db.String(250), nullable=False)
     gender = db.Column(db.String(250), nullable=False)
 
-    favorited_by = relationship('PersonajesFavoritos', back_populates='personaje')
+    personajes_favoritos = db.relationship('PersonajesFavoritos', backref='personajes', lazy=True)
+   
 
     def __repr__(self):
         return '<Personajes %r>' % self.name
@@ -74,6 +58,27 @@ class Personajes(db.Model):
             "gender": self.gender,
         }
 
+
+# Tabla intermedia PersonajesFavoritos
+class PersonajesFavoritos(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'),
+        nullable=False)
+    personaje_favorito = db.Column(db.Integer, db.ForeignKey('personajes.id'),
+        nullable=False)
+    
+ 
+
+    def __repr__(self):
+        return '<PersonajesFav %r>' % self.id
+
+    def serialize(self):
+        return {
+          "id": self.id,
+          "user_id": self.user_id,
+          "personaje_favorito": self.personaje_favorito
+        }
+    
 # Clase Planetas
 class Planetas(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -85,8 +90,9 @@ class Planetas(db.Model):
     gravity = db.Column(db.String(250), nullable=False)
     terrain = db.Column(db.String(250), nullable=False)
 
-    favorited_by = relationship('PlanetasFavoritos', back_populates='planeta')
-
+    planetas_favoritos = db.relationship('PlanetasFavoritos', backref='planetas', lazy=True)
+    
+    
     def __repr__(self):
         return '<Planetas %r>' % self.name
 
@@ -102,27 +108,27 @@ class Planetas(db.Model):
             "terrain": self.terrain,
         }
 
-# Clase User
-class User(db.Model):
+# Tabla intermedia PlanetasFavoritos
+class PlanetasFavoritos(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120), unique=False, nullable=False)
-    last_name = db.Column(db.String(120), unique=False, nullable=False)
-    user_name = db.Column(db.String(120), unique=True, nullable=False)
-    email = db.Column(db.String(120), unique=True, nullable=False)
-    password = db.Column(db.String(80), unique=False, nullable=False)
-    is_active = db.Column(db.Boolean(), unique=False, nullable=False)
-
-    personajes_favoritos = relationship('PersonajesFavoritos', back_populates='user')
-    planetas_favoritos = relationship('PlanetasFavoritos', back_populates='user')
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'),
+        nullable=False)
+    planeta_favorito = db.Column(db.Integer, db.ForeignKey('planetas.id'),
+        nullable=False)
+    
+    
 
     def __repr__(self):
-        return '<User %r>' % self.name
+        return '<PlanetasFav %r>' % self.user_id
 
     def serialize(self):
         return {
-            "id": self.id,
-            "name": self.name,
-            "last_name": self.last_name,
-            "user_name": self.user_name,
-            "email": self.email,
+          "id": self.id,
+          "user_id": self.user_id,
+          "planeta_favorito": self.planeta_favorito
         }
+
+
+
+
+
