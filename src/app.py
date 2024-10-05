@@ -105,13 +105,13 @@ def add_personaje(people_id):
     
     return jsonify(response_body), 200
 
-@app.route('/user/favorites/<int:user_id>', methods=['GET'])
-def get_favorites(user_id):
+@app.route('/user/favorites/<int:id_user>', methods=['GET'])
+def get_favorites(id_user):
     
-    planetas_favoritos = PlanetasFavoritos.query.filter_by(id=user_id)
+    planetas_favoritos = PlanetasFavoritos.query.filter_by(user_id=id_user)
     planetas = list(map(lambda item: item.serialize(), planetas_favoritos)) 
 
-    personajes_favoritos = PersonajesFavoritos.query.filter_by(id=user_id)
+    personajes_favoritos = PersonajesFavoritos.query.filter_by(user_id=id_user)
     personajes = list(map(lambda item: item.serialize(), personajes_favoritos))
 
     result = {
@@ -122,20 +122,46 @@ def get_favorites(user_id):
 
     return jsonify(result), 200
 
-@app.route('/planets/<int:planet_id>/<int:user_id>', methods=['DELETE'])
-def delete_planeta(planet_id, user_id):
+@app.route('/planets/<int:planet_id>/<int:id_user>', methods=['DELETE'])
+def delete_planeta(planet_id, id_user):
+    planetas_favoritos = PlanetasFavoritos.query.filter_by(user_id=id_user).all()
 
-    planetas_favoritos = PlanetasFavoritos.query.filter_by(id=user_id)
-    planetas = list(map(lambda item: item.serialize(), planetas_favoritos)) 
-
-    print(planetas)
+    def planet_to_delete(item):
+        return item.planeta_favorito == planet_id
     
+    seleccion_de_planeta = list(filter(planet_to_delete, planetas_favoritos))
 
-    response_body = {
-        "msg": "se agrego a Favoritos "
-    }
-    
+    if len(seleccion_de_planeta) > 0:
+        planeta_a_eliminar = seleccion_de_planeta[0]
+        db.session.delete(planeta_a_eliminar)
+        db.session.commit()
+
+        response_body = {"msg": "Se eliminó correctamente"}
+    else:
+        response_body = {"msg": "No se encontró el planeta favorito o el usurio"}
+
     return jsonify(response_body), 200
+
+@app.route('/people/<int:people_id>/<int:id_user>', methods=['DELETE'])
+def delete_personaje(people_id, id_user):
+    personajes_favoritos = PersonajesFavoritos.query.filter_by(user_id=id_user).all()
+
+    def character_to_delete(item):
+        return item.personaje_favorito == people_id
+    
+    seleccion_de_personaje = list(filter(character_to_delete, personajes_favoritos))
+
+    if len(seleccion_de_personaje) > 0:
+        personaje_a_eliminar = seleccion_de_personaje[0]
+        db.session.delete(personaje_a_eliminar)
+        db.session.commit()
+
+        response_body = {"msg": "Se eliminó correctamente"}
+    else:
+        response_body = {"msg": "No se encontró el personaje favorito o el usuario"}
+
+    return jsonify(response_body), 200
+
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':
